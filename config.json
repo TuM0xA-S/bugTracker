@@ -1,0 +1,6 @@
+{
+    "MongodbURI": "mongodb://localhost:27017",
+    "Host": "localhost:2222",
+    "DBName": "bugTracker",
+    "CollectionName": "bugs"
+}
