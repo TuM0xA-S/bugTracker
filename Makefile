@@ -11,7 +11,7 @@ lint: linters
 	revive
 	errcheck
 
-tests: run
+tests:
 	docker exec -t bugtracker_bug-tracker_1 go test ./...
 
 run: stop clean
@@ -25,4 +25,4 @@ linters:
 	go get github.com/mgechev/revive
 
 clean:
-	docker rmi bugtracker_bug-tracker
+	-docker rmi bugtracker_bug-tracker
