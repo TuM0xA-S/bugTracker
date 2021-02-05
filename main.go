@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -19,21 +18,44 @@ type config struct {
 	Host           string
 	DBName         string
 	CollectionName string
+	Indent         string
 }
 
+func parseConfig() (cfg config) {
+	//set default
+	cfg.MongodbURI = "mongodb://localhost:27017"
+	cfg.Host = "localhost:2222"
+	cfg.DBName = "bugTracker"
+	cfg.CollectionName = "bugs"
+	cfg.Indent = ""
 
+	//read cfg from env
+	if val, ok := os.LookupEnv("BT_MongodbURI"); ok {
+		cfg.MongodbURI = val
+	}
+	if val, ok := os.LookupEnv("BT_Host"); ok {
+		cfg.Host = val
+	}
+	if val, ok := os.LookupEnv("BT_DBName"); ok {
+		cfg.DBName = val
+	}
+	if val, ok := os.LookupEnv("BT_CollectionName"); ok {
+		cfg.CollectionName = val
+	}
+	if val, ok := os.LookupEnv("BT_Indent"); ok {
+		cfg.Indent = val
+	}
+	return
+}
 
 func main() {
-	cfgFile, err := os.Open("config.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	decoder := json.NewDecoder(cfgFile)
-	var cfg config
-	if err := decoder.Decode(&cfg); err != nil {
-		log.Fatal(err)
-	}
+	log.Println("starting...")
+
+	cfg := parseConfig()
+	log.Printf("config: %#v\n", cfg)
 	ctx := context.Background()
+
+	log.Println("connecting to db on", cfg.MongodbURI) 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongodbURI))
 	if err != nil {
 		log.Fatal(err)
@@ -54,8 +76,10 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Handle("/api/update", UpdateHandler{bugs})
-	r.Handle("/api/cve/{CVE}", QueryHandler{bugs})
+	r.Handle("/api/cve/{CVE}", QueryHandler{bugs, cfg.Indent})
 	http.Handle("/", r)
+
+	log.Println("starting serving at", cfg.Host)
 	if err := http.ListenAndServe(cfg.Host, nil); err != nil {
 		log.Fatal(err)
 	}

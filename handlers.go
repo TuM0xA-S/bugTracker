@@ -72,10 +72,11 @@ func (u UpdateHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 //QueryHandler handles queries
 type QueryHandler struct {
 	bugs *mongo.Collection
+	indent string
 }
 
 func (q QueryHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	log.Println("query...")
+	log.Println("query", req.URL)
 	CVE := "CVE-" + mux.Vars(req)["CVE"]
 	query := bson.D {
 		{"CVE", CVE},
@@ -97,7 +98,7 @@ func (q QueryHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	
 	enc := json.NewEncoder(rw)
-	enc.SetIndent("", "    ")
+	enc.SetIndent("", q.indent)
 	if err := enc.Encode(bd); err != nil {
 		log.Printf("when encoding result to json: %v\n", err)
 	}
