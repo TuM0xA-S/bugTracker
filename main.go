@@ -52,10 +52,10 @@ func main() {
 	log.Println("starting...")
 
 	cfg := parseConfig()
-	log.Printf("config: %#v\n", cfg)
+	log.Printf("%#v\n", cfg)
 	ctx := context.Background()
 
-	log.Println("connecting to db on", cfg.MongodbURI) 
+	log.Println("connecting to db on", cfg.MongodbURI)
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongodbURI))
 	if err != nil {
 		log.Fatal(err)
@@ -67,12 +67,14 @@ func main() {
 	}()
 
 	bugs := client.Database(cfg.DBName).Collection(cfg.CollectionName)
-	bugs.Indexes().CreateOne(context.TODO(), mongo.IndexModel{
+	if _, err := bugs.Indexes().CreateOne(context.TODO(), mongo.IndexModel{
 		Keys: bson.D{
-			{"CVE", 1},
-			{"Source", 1},
+			{Key: "CVE", Value: 1},
+			{Key: "Source", Value: 1},
 		},
-	})
+	}); err != nil {
+		log.Println("while trying to create index:", err)
+	}
 
 	r := mux.NewRouter()
 	r.Handle("/api/update", UpdateHandler{bugs})

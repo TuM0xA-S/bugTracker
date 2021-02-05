@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  bug-tracker:
+    build: .
+    ports:
+    - 80:2222
+    environment:
+    # config here
+    - BT_MongodbURI=mongodb://bugtracker_mongodb_1:27017
+    - BT_Host=:2222
+    - BT_DBName=bugTracker
+    - BT_CollectionName=bugs
+    - "BT_Indent=" # json indentation in response(no indenation by default)
+  
+  mongodb:
+    image: mongo
+    volumes:
+    - ~/mongodb-data:/data/db

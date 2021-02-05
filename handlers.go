@@ -65,7 +65,10 @@ func (u UpdateHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	u.pushToDB(list)
 
-	rw.Write([]byte("\"update done\"\n"))
+	rw.Header().Set("Content-Type", "application/json")
+	if _, err := rw.Write([]byte("\"update done\"\n")); err != nil {
+		log.Println("while write to response:", err)
+	}
 	log.Printf("update ended. time elapsed %fs", time.Since(start).Seconds())
 }
 
@@ -79,14 +82,14 @@ func (q QueryHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	log.Println("query", req.URL)
 	CVE := "CVE-" + mux.Vars(req)["CVE"]
 	query := bson.D {
-		{"CVE", CVE},
+		{Key: "CVE", Value: CVE},
 	}
 	qs := req.URL.Query()
 	if qs.Get("source") != "" {
-		query = append(query, bson.E{"Source", qs.Get("source")})
+		query = append(query, bson.E{Key: "Source", Value: qs.Get("source")})
 	}
 	if qs.Get("pkg") != "" {
-		query = append(query, bson.E{"Packages", qs.Get("pkg")})
+		query = append(query, bson.E{Key: "Packages", Value: qs.Get("pkg")})
 	}
 	cur, err := q.bugs.Find(context.TODO(), query)
 	if err != nil {
@@ -97,6 +100,7 @@ func (q QueryHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		log.Printf("when decoding result from bd: %v\n", err)
 	}
 	
+	rw.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(rw)
 	enc.SetIndent("", q.indent)
 	if err := enc.Encode(bd); err != nil {

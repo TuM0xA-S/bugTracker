@@ -27,6 +27,7 @@ func getCVEList(links []string, n *html.Node) []string {
 	return links
 }
 
+//Load parses data from ubuntu-cve-tracker
 func Load() (res []types.BugData, err error) {
 	page, err := load.Fetch("https://git.launchpad.net/ubuntu-cve-tracker/tree/active")
 	if err != nil {
